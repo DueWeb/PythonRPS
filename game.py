@@ -3,6 +3,7 @@ winning_options = {
     "paper": "rock",
     "scissors": "paper"
 }
+
 # First user input
 player1_option = input("Player 1 : Pick your weapon (Rock, paper scissors)\n")
 
@@ -24,12 +25,17 @@ if player2_option.lower() not in winning_options:
         if player2_option.lower() in winning_options:
             break
 
-if player1_option.lower() == player2_option.lower():
-    print("It´s a tie\n")
-elif winning_options[player1_option.lower()] == player2_option.lower():
-    print("\nPlayer 1 wins!\n")
-elif winning_options[player2_option.lower()] == player1_option.lower():
-    print("\nPlayer 2 wins!\n")
+
+def choose_winner():
+    global player1_option, player2_option
+
+    if player1_option.lower() == player2_option.lower():
+        print("It´s a tie!\n")
+    elif winning_options[player1_option.lower()] == player2_option.lower():
+        print("\nPlayer 1 wins!\n")
+    elif winning_options[player2_option.lower()] == player1_option.lower():
+        print("\nPlayer 2 wins!\n")
+
 
 print("Player 1 option:", player1_option)
 print("Player 2 option:", player2_option)
