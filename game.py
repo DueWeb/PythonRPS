@@ -26,8 +26,7 @@ def game_loop():
     global player1_name, player2_name
     while True:
         if not game_started:
-            send(
-                f"{player1_name} and {player2_name} are ready to play. Type 'start' to begin.")
+            send(f"({player1_name} and {player2_name} are ready to play. Type 'start' to begin.")
             while True:
                 choice = input().strip().lower()
                 if choice == "start":
