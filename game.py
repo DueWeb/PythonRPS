@@ -23,6 +23,7 @@ def handle_game_message(timestamp, user, message):
 
 
 def game_loop():
+    global player1_name, player2_name
     while True:
         if not game_started:
             send(
@@ -34,40 +35,47 @@ def game_loop():
                     break
                 else:
                     send("Invalid choice. Type 'start' to begin.")
+            # Prompt player 1 to choose option
+            send(f"{player1_name}, choose your option (rock, paper, or scissors):")
+        else:
+            if not player1_option:
+                send(f"{player1_name}, choose your option (rock, paper, or scissors):")
+            elif not player2_option:
+                send(f"{player2_name}, choose your option (rock, paper, or scissors):")
+            else:
+                choose_winner()
+                reset_game()
+                # Prompt player 1 to choose option
+                send(f"{player1_name}, choose your option (rock, paper, or scissors):")
 
 
 def game_initiation():
-    # First user input
+    global player1_option, player2_option
+    # Prompt player 1 for their weapon choice
     player1_option = input(
-        "Player 1 : Pick your weapon (Rock, paper scissors)\n")
-    # Option one for looping
-    while player1_option.lower() not in winning_options:
-        print("This is not a option, please choose a valid option\n")
+        "Player 1: Pick your weapon (rock, paper, scissors)\n").strip().lower()
+    while player1_option not in winning_options:
+        print("Invalid choice. Please choose rock, paper, or scissors.")
         player1_option = input(
-            "Player 1 : Pick your weapon (Rock, paper scissors)\n")
-    # Second user input
+            "Player 1: Pick your weapon (rock, paper, scissors)\n").strip().lower()
+
+    # Prompt player 2 for their weapon choice
     player2_option = input(
-        "Player 2 : Pick your weapon (Rock, paper scissors)\n")
-    # Option two for looping
-    if player2_option.lower() not in winning_options:
-        while True:
-            print("This is not a option, please choose a valid option\n")
-            player2_option = input(
-                "Player 2 : Pick your weapon (Rock, paper scissors)\n")
-            if player2_option.lower() in winning_options:
-                break
+        "Player 2: Pick your weapon (rock, paper, scissors)\n").strip().lower()
+    while player2_option not in winning_options:
+        print("Invalid choice. Please choose rock, paper, or scissors.")
+        player2_option = input(
+            "Player 2: Pick your weapon (rock, paper, scissors)\n").strip().lower()
 
 
 def choose_winner():
     global player1_option, player2_option
-    if player1_option.lower() == player2_option.lower():
-        print("It´s a tie!\n")
-    elif winning_options[player1_option.lower()] == player2_option.lower():
-        print("\nPlayer 1 wins!\n")
-    elif winning_options[player2_option.lower()] == player1_option.lower():
-        print("\nPlayer 2 wins!\n")
-
-# Reset
+    if player1_option == player2_option:
+        print("It's a tie!")
+    elif winning_options[player1_option] == player2_option:
+        print("Player 1 wins!")
+    else:
+        print("Player 2 wins!")
 
 
 def reset_game():
@@ -82,7 +90,17 @@ def reset_game():
 player_name = input("Enter your name: ")
 channel = input("Enter channel name: ")
 
-connect(channel, player_name, react_on_messages)
+connect(channel, player_name, handle_game_message)
 
-print("Player 1 option:", player1_option)
-print("Player 2 option:", player2_option)
+player1_name = player_name
+player2_name = input("Enter player 2 name: ")
+
+game_started = False
+player1_option = None
+player2_option = None
+
+while True:
+    reset_game()
+    game_loop()
+    game_initiation()
+    choose_winner()
