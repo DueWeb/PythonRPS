@@ -1,6 +1,5 @@
-from command_line_chat import *
-from network import *
-
+from threading import Thread
+from network import connect, send
 
 winning_options = {
     "rock": "scissors",
@@ -8,105 +7,66 @@ winning_options = {
     "scissors": "paper"
 }
 
-player1_name = None
-player2_name = None
-game_started = False
-player1_option = None
-player2_option = None
 
-
-def handle_game_message(timestamp, user, message):
-    global player1_option, player2_option, game_started
-    react_on_messages(timestamp, user, message)
-    if not game_started:
-        return
-    elif user == player1_name:
-        player1_option = message
-    elif user == player2_name:
-        player2_option == message
-
-# prompt players to start game
-
-
-def game_loop():
-    global player1_name, player2_name
+def send_message():
     while True:
-        if not game_started:
-            send(
-                f"{player1_name} and {player2_name} are ready to play. Type 'start' to begin.")
-            while True:
-                choice = input().strip().lower()
-                if choice == "start":
-                    game_started = True
-                    break
-                else:
-                    send("Invalid choice. Type 'start' to begin.")
-            # Prompt player 1 to choose option
-            send(f"{player1_name}, choose your option (rock, paper, or scissors):")
+        send(input())
+
+
+def react_on_messages(timestamp, user, message):
+
+    global me, opponent, myChoice, opponentChoice, winning_options
+
+    # listen to who joins the channel...
+    if user == 'system' and 'joined channel' in message:
+        player = message.split(' ')[1]
+        if player != me:
+            opponent = player
+            print(opponent + ' has joined!\n')
+            print('Let us play!\n')
+            print('Choose paper, rock or scissors:')
+
+    # If your choice is invalid
+    if user == me and message not in ['paper', 'rock', 'scissors']:
+        print('You must choose paper, rock or scissors!\n')
+
+    # Remember my choice
+    if user == me and message in ['paper', 'rock', 'scissors']:
+        myChoice = message
+
+    if user == opponent and message not in ['paper', 'rock', 'scissors']:
+        print('You must choose paper, rock or scissors!\n')
+
+    # Remember the opponent's choice
+    if user == opponent and message in ['paper', 'rock', 'scissors']:
+        opponentChoice = message
+
+    # Both me and my opponent have made choices
+    if myChoice != '' and opponentChoice != '':
+        print('\nYou chose ' + myChoice)
+        print('and ' + opponent + ' chose ' + opponentChoice)
+        # now we can determine who has won (this round)
+        if myChoice.lower() == opponentChoice.lower():
+            print("It´s a tie!\n")
+        elif winning_options[myChoice.lower()] == opponentChoice.lower():
+            print("\nPlayer 1 wins!\n")
+        elif winning_options[opponentChoice.lower()] == myChoice.lower():
+            print("\nPlayer 2 wins!\n")
         else:
-            if not player1_option:
-                send(f"{player1_name}, choose your option (rock, paper, or scissors):")
-            elif not player2_option:
-                send(f"{player2_name}, choose your option (rock, paper, or scissors):")
-            else:
-                choose_winner()
-                reset_game()
-                # Prompt player 1 to choose option
-                send(f"{player1_name}, choose your option (rock, paper, or scissors):")
+            print('Not sure who won :(')
+        # # reset choices
+        myChoice = ''
+        opponentChoice = ''
+        print('\nChoose paper, rock or scissors:')
 
 
-def game_initiation():
-    global player1_option, player2_option
-    # Prompt player 1 for their weapon choice
-    player1_option = input(
-        "Player 1: Pick your weapon (rock, paper, scissors)\n").strip().lower()
-    while player1_option not in winning_options:
-        print("Invalid choice. Please choose rock, paper, or scissors.")
-        player1_option = input(
-            "Player 1: Pick your weapon (rock, paper, scissors)\n").strip().lower()
-
-    # Prompt player 2 for their weapon choice
-    player2_option = input(
-        "Player 2: Pick your weapon (rock, paper, scissors)\n").strip().lower()
-    while player2_option not in winning_options:
-        print("Invalid choice. Please choose rock, paper, or scissors.")
-        player2_option = input(
-            "Player 2: Pick your weapon (rock, paper, scissors)\n").strip().lower()
-
-
-def choose_winner():
-    global player1_option, player2_option
-    if player1_option == player2_option:
-        print("It's a tie!")
-    elif winning_options[player1_option] == player2_option:
-        print("Player 1 wins!")
-    else:
-        print("Player 2 wins!")
-
-
-def reset_game():
-    global player1_name, player2_name, player1_option, player2_option, game_started
-    player1_name = None
-    player2_name = None
-    player1_option = None
-    player2_option = None
-    game_started = False
-
-
-player_name = input("Enter your name: ")
-channel = input("Enter channel name: ")
-
-connect(channel, player_name, handle_game_message)
-
-player1_name = player_name
-player2_name = input("Enter player 2 name: ")
-
-game_started = False
-player1_option = None
-player2_option = None
-
-while True:
-    reset_game()
-    game_loop()
-    game_initiation()
-    choose_winner()
+# START -> Wait for player to enter name and channel
+opponent = ''
+myChoice = ''
+opponentChoice = ''
+me = input('Your name: ')
+channel = input('Channel to join or create: ')
+# connect to (or create) a channel, with a user name
+connect(channel, me, react_on_messages)
+# start non-blocking thread to input and send messages
+Thread(target=send_message).start()
